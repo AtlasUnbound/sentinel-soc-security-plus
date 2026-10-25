@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SENTINEL SOC — CompTIA Security+ (SY0-701) Cyber Defense Simulator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ========================================================================
+       TOP COMMAND HEADER & LIVE TELEMETRY HUD
+       ======================================================================== -->
+  <header class="soc-header">
+    <div class="brand-group">
+      <div class="brand-badge" aria-hidden="true">S+</div>
+      <div>
+        <h1 class="brand-title">
+          SENTINEL SOC
+          <span class="exam-tag">SY0-701 READY</span>
+        </h1>
+        <p class="brand-subtitle">CompTIA Security+ Tactical Cyber Defense &amp; Exam Simulator</p>
+      </div>
+    </div>
+
+    <div class="hud-stats" role="region" aria-label="Player Telemetry">
+      <div class="stat-pill" title="Current Analyst Clearance &amp; Experience">
+        <span class="stat-label">Rank</span>
+        <span class="stat-value cyan" id="hudRank">L1 Analyst</span>
+      </div>
+      <div class="stat-pill" title="Exam Readiness Score (Target: 750 / 900)">
+        <span class="stat-label">Sec+ Score</span>
+        <span class="stat-value emerald" id="hudScore">0 / 900</span>
+      </div>
+      <div class="stat-pill" title="Consecutive Threat Mitigations">
+        <span class="stat-label">Streak</span>
+        <span class="stat-value amber" id="hudStreak">0x</span>
+      </div>
+      <div class="stat-pill" title="SOC Budget Credits for Countermeasures">
+        <span class="stat-label">SOC Credits</span>
+        <span class="stat-value cyan" id="hudCredits">150 CR</span>
+      </div>
+      <button type="button" class="icon-btn" id="btnAudioToggle" aria-pressed="true" title="Toggle Web Audio Synthesizer SFX">
+        <span id="audioIcon">🔊</span> SFX
+      </button>
+      <button type="button" class="icon-btn" id="btnHelpModal" title="Keyboard Shortcuts &amp; Exam Guide">
+        <span>?</span> Guide
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       NAVIGATION TABS & DOMAIN FILTER BAR
+       ======================================================================== -->
+  <nav class="control-bar" aria-label="Game Modes and Domain Filters">
+    <div class="mode-tabs" role="tablist">
+      <button type="button" class="tab-btn active" data-mode="defense" role="tab" aria-selected="true">
+        🛡️ Live SOC Defense (MCQ)
+      </button>
+      <button type="button" class="tab-btn" data-mode="pbq" role="tab" aria-selected="false">
+        ⚡ Interactive PBQ Labs (3)
+      </button>
+      <button type="button" class="tab-btn" data-mode="codex" role="tab" aria-selected="false">
+        📚 Acronym &amp; Port Codex
+      </button>
+    </div>
+
+    <div class="domain-filter-group" id="domainFilterBar" aria-label="Filter by CompTIA Security+ Domain">
+      <button type="button" class="filter-chip active" data-domain="ALL">All Domains (100%)</button>
+      <button type="button" class="filter-chip" data-domain="1.0" title="General Security Concepts (12%)">D1: Concepts (12%)</button>
+      <button type="button" class="filter-chip" data-domain="2.0" title="Threats, Vulnerabilities &amp; Mitigations (22%)">D2: Threats (22%)</button>
+      <button type="button" class="filter-chip" data-domain="3.0" title="Security Architecture (18%)">D3: Architecture (18%)</button>
+      <button type="button" class="filter-chip" data-domain="4.0" title="Security Operations (28%)">D4: Operations (28%)</button>
+      <button type="button" class="filter-chip" data-domain="5.0" title="Security Program Management &amp; Oversight (20%)">D5: Governance (20%)</button>
+      <button type="button" class="filter-chip" data-domain="WEAK" title="Focus on missed or low-accuracy domains">🎯 Weak Spots</button>
+    </div>
+  </nav>
+
+  <!-- ========================================================================
+       MAIN WORKSPACE
+       ======================================================================== -->
+  <main class="workspace">
+    <div class="soc-grid">
+      <!-- LEFT PANEL: LIVE TOPOLOGY RADAR, INTEGRITY & DOMAIN MASTERY -->
+      <aside class="panel" aria-label="Network Topology and Domain Mastery">
+        <div class="panel-header">
+          <span class="panel-title">
+            <span class="status-dot" id="radarStatusDot"></span>
+            Enterprise Threat Radar
+          </span>
+          <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);" id="activeTargetLabel">
+            TARGET: CORE DB
+          </span>
+        </div>
+
+        <div class="radar-wrapper">
+          <canvas id="socCanvas" width="380" height="250"></canvas>
+        </div>
+
+        <div class="integrity-bar-wrap">
+          <div class="integrity-label-row">
+            <span style="font-weight: 700; color: var(--text-secondary);">Network Integrity (SLA Uptime)</span>
+            <span style="font-family: var(--font-mono); font-weight: 700;" id="integrityValue">100%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="integrityFill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <div class="countermeasures-box">
+          <div class="cm-header">
+            <span>Active SOAR Countermeasures</span>
+            <span id="cmHintStatus" style="color: var(--accent-cyan);">Ready</span>
+          </div>
+          <div class="cm-grid">
+            <button type="button" class="cm-btn" id="btnCmFilter" title="Eliminate 2 incorrect distractor options (Shortcut: F)">
+              <span class="cm-name">🔍 Deep Packet</span>
+              <span class="cm-cost">50 CR [F]</span>
+            </button>
+            <button type="button" class="cm-btn" id="btnCmIntel" title="Reveal CompTIA Exam Tip before answering (Shortcut: T)">
+              <span class="cm-name">🧠 Threat Intel</span>
+              <span class="cm-cost">35 CR [T]</span>
+            </button>
+            <button type="button" class="cm-btn" id="btnCmPatch" title="Restore +25% Network Integrity (Shortcut: R)">
+              <span class="cm-name">🛠️ Hotfix Patch</span>
+              <span class="cm-cost">60 CR [R]</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-header" style="border-top: 1px solid var(--border-subtle);">
+          <span class="panel-title">SY0-701 Domain Mastery</span>
+          <button type="button" class="icon-btn" id="btnResetStats" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">
+            Reset
+          </button>
+        </div>
+        <div class="domain-bars" id="domainMasteryList">
+          <!-- Populated dynamically by game.js -->
+        </div>
+      </aside>
+
+      <!-- RIGHT PANEL: DYNAMIC VIEWPORT (DEFENSE MCQ / PBQ LABS / CODEX) -->
+      <section class="panel" id="mainViewport" aria-live="polite">
+        <!-- VIEW 1: LIVE SOC DEFENSE (SCENARIO MCQ) -->
+        <div id="viewDefense" class="incident-card">
+          <div class="incident-meta">
+            <div class="badge-row">
+              <span class="domain-badge" id="qDomainBadge">Domain 1.0</span>
+              <span class="subdomain-badge" id="qSubdomainBadge">1.1 Security Controls</span>
+              <span class="subdomain-badge" id="qDifficultyBadge">Medium</span>
+            </div>
+            <span style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);" id="qProgressCounter">
+              Incident 1 of 36
+            </span>
+          </div>
+
+          <div class="threat-banner" id="threatBanner">
+            <div>
+              <span>🚨 ACTIVE ALERT: </span>
+              <strong id="qThreatName">Unauthorized Data Center Entry</strong>
+            </div>
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary);" id="qTargetNode">
+              Node: Core DB
+            </span>
+          </div>
+
+          <div class="question-prompt" id="qPromptText">
+            Loading incident scenario...
+          </div>
+
+          <div id="preAnswerIntelBox" class="exam-tip-callout hidden" style="margin-bottom: 1rem;"></div>
+
+          <div class="options-list" id="qOptionsList">
+            <!-- Populated dynamically -->
+          </div>
+
+          <div id="qFeedbackBox" class="feedback-box hidden">
+            <div class="feedback-header" id="qFeedbackHeader"></div>
+            <div class="feedback-text" id="qExplanationText"></div>
+            <div class="exam-tip-callout" id="qExamTipText"></div>
+          </div>
+
+          <div class="action-footer">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">
+              Shortcuts: <kbd class="kbd">1</kbd>–<kbd class="kbd">4</kbd> Select • <kbd class="kbd">Enter</kbd> / <kbd class="kbd">Space</kbd> Next Incident
+            </span>
+            <button type="button" class="primary-btn" id="btnNextQuestion">
+              Skip / Next Incident →
+            </button>
+          </div>
+        </div>
+
+        <!-- VIEW 2: INTERACTIVE PBQ LABS -->
+        <div id="viewPbq" class="incident-card hidden">
+          <div class="pbq-selector-bar" id="pbqSelectorBar">
+            <!-- Populated dynamically -->
+          </div>
+          <div id="pbqContainer">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- VIEW 3: ACRONYM & PORT CODEX -->
+        <div id="viewCodex" class="incident-card hidden">
+          <div class="incident-meta">
+            <div>
+              <h2 style="font-size: 1.15rem; font-weight: 700;">SY0-701 Acronym, Protocol &amp; Port Rapid Reference</h2>
+              <p style="font-size: 0.84rem; color: var(--text-muted);">
+                High-frequency exam terms, network ports, and formulas. Filterable in real time.
+              </p>
+            </div>
+          </div>
+          <div class="codex-controls">
+            <input
+              type="search"
+              id="codexSearchInput"
+              class="search-input"
+              placeholder="Search acronym, port (e.g., 443, 636, TACACS+, SASE, ALE, TOCTOU)..."
+              aria-label="Search acronyms and ports"
+            />
+          </div>
+          <div class="codex-grid" id="codexGrid">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       NATIVE <dialog> HELP & EXAM GUIDE MODAL
+       ======================================================================== -->
+  <dialog class="soc-dialog" id="helpDialog">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h2 style="font-size: 1.15rem; color: var(--accent-cyan);">SENTINEL SOC — Tactical Briefing &amp; Controls</h2>
+      <button type="button" class="icon-btn" id="btnCloseDialog">✕ Close</button>
+    </div>
+    <div style="font-size: 0.9rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.85rem;">
+      <p>
+        <strong>Mission Objective:</strong> Defend the enterprise network while mastering all 5 official CompTIA Security+ (SY0-701) exam domains. Every correct mitigation neutralizes an active threat vector on the radar, boosts your simulated Sec+ score (scaled 0–900, passing is <strong>750+</strong>), and awards SOC Credits.
+      </p>
+      <div>
+        <strong style="color: var(--text-primary);">SOAR Countermeasures (Spend SOC Credits):</strong>
+        <ul style="margin-left: 1.2rem; margin-top: 0.3rem;">
+          <li><strong>🔍 Deep Packet (50 CR):</strong> Eliminates 2 incorrect options on the current incident.</li>
+          <li><strong>🧠 Threat Intel (35 CR):</strong> Unlocks the CompTIA Exam Tip before you lock in your answer.</li>
+          <li><strong>🛠️ Hotfix Patch (60 CR):</strong> Restores +25% Network Integrity if breaches have degraded your SLA.</li>
+        </ul>
+      </div>
+      <div>
+        <strong style="color: var(--text-primary);">Keyboard Shortcuts:</strong>
+        <p style="margin-top: 0.3rem;">
+          <kbd class="kbd">1</kbd> <kbd class="kbd">2</kbd> <kbd class="kbd">3</kbd> <kbd class="kbd">4</kbd> Choose answer option &nbsp;|&nbsp;
+          <kbd class="kbd">Enter</kbd> or <kbd class="kbd">Space</kbd> Next incident &nbsp;|&nbsp;
+          <kbd class="kbd">F</kbd> 50/50 Packet Filter &nbsp;|&nbsp;
+          <kbd class="kbd">T</kbd> Threat Intel Hint &nbsp;|&nbsp;
+          <kbd class="kbd">R</kbd> Hotfix Patch
+        </p>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="questions.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
